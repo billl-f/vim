@@ -135,19 +135,17 @@ nnoremap <leader>ctu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter te
 
 "------------Rebinds----------------------------
 "d no longer yanks, remap to black hole register
-"noremap d "_d
-"nnoremap D "_D
-"vnoremap d "_d
-"vnoremap D "_D
+noremap d "_d
+nnoremap D "_D
+vnoremap d "_d
+vnoremap D "_D
 "
 ""x no longer yanks, remap to black hole register
-"nnoremap x "_x
-"vnoremap x "_x
+nnoremap x "_x
+vnoremap x "_x
 
 "jk and kj map to to normal mode
 inoremap jk <esc>
-"TODO
-"tnoremap jk N
 
 "go up and down visually in normal mode
 nnoremap j gj
@@ -164,11 +162,10 @@ nnoremap <C-j> <C-W>j
 nnoremap <C-k> <C-W>k
 nnoremap <C-l> <C-W>l
 nnoremap <C-h> <C-W>h
-"TODO
-"tnoremap j
-"tnoremap k
-"tnoremap h
-"tnoremap l
+tnoremap <C-j> <C-W>j
+tnoremap <C-k> <C-W>k
+tnoremap <C-l> <C-W>l
+tnoremap <C-h> <C-W>h
 
 "center buffer when jumping around functions
 nnoremap ]] ]]zz
@@ -185,8 +182,8 @@ ca Glog Glog!
 "open VIMRC
 nnoremap <leader>$ :e $MYVIMRC<CR>
 
-"update tags
-nnoremap <leader>] :GutentagsUpdate!
+"open current test in gdb
+nnoremap <leader>g :call GDBTest()<CR>
 
 "yank and paste from system clipboard
 nnoremap <leader>p "+p
@@ -266,13 +263,13 @@ if has("gui_running")
   hi IncSearch guifg=DarkRed
 
 else
-"  "This is console Vim.
+  "This is console Vim.
   colorscheme desert
-"  "arcane settings to get block cursor for normal mode
-  "let &t_ti.="\e[1 q"
+  "arcane settings to get block cursor for normal mode
+  let &t_ti.="\e[1 q"
   let &t_SI.="\e[5 q"
-  "let &t_EI.="\e[1 q"
-  "let &t_te.="\e[0 q"
+  let &t_EI.="\e[1 q"
+  let &t_te.="\e[0 q"
 endif
 
 
@@ -323,11 +320,11 @@ set cindent
 
 " This should make the text for comment blocks
 " start on the same column as the slash /
-set cinoptions+=c0,C1
+"set cinoptions+=c0,C1
 
 " This should have multi-line conditionals to start
 " on the column after the (
-set cinoptions+=(0,u0,w1
+"set cinoptions+=(0,u0,w1
 
 "set 'normal' shifting
 set cinoptions+=>1s
@@ -429,6 +426,28 @@ function!
   "execute 'silent !start cmd /k "iwyu2.sh " % --max_line_length=200'
 endfunction
 
+function! GDBTest()
+  let l_path = "prod/unittests/debug/utsim-b3mb/build/" . expand("%")
+  "libraries has special handling
+  if l_path =~ "/lib/"
+    "extract the lib name which is also test name
+    let l_path2 = split(l_path, "/lib/")[1]
+    let l_path2 = split(l_path2, "/")[0]
+    "remove test folder from path
+    let l_path = split(l_path, "test/")[0]
+    "add in lib name to path
+    let l_path = l_path . "test_" . l_path2
+  else
+    "remove test folder from path
+    let l_path = split(l_path, "test/")[0] . expand("%:t")
+    "remove .cpp
+    let l_path = split(l_path, ".cpp")[0]
+  endif
+  winc |
+  execute ":Termdebug " . l_path
+  winc l
+endfunc
+
 if g:os == 'Windows'
   "setup default diff expression for windows
   set diffexpr=MyDiff()
@@ -459,3 +478,12 @@ endfunc
 function! UpdatePath()
   let &path = getcwd() . '/**'
 endfunc
+
+"--------------Term -----------------------------
+"has to be late or else cursor doesn't work ??
+packadd termdebug
+let g:termdebug_wide = 1
+
+"-------------------------------------------
+let $BASH_ENV = "/home/bfran/bin/aliases.sh"
+set makeprg=buildfw
