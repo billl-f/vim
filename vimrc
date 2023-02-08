@@ -8,10 +8,13 @@ if has('win32') || has('win16') || has ('win64')
     let g:os = 'Windows'
     let g:vim_folder ='~/vimfiles/'
     let g:ignore_file ='~/git/ignore'
+    "note: ~ doesn't work here due to rg external cmd
+    let g:rgignore_file ='C:/users/bfraney/git/rgignore'
 else
     let g:os = substitute(system('uname'), '\n', '', '')
     let g:vim_folder ='~/.vim/'
-    let g:ignore_file ='~.config/git/ignore'
+    let g:ignore_file ='~/.config/git/ignore'
+    let g:rgignore_file ='~/.config/rgignore'
 endif
 
 "--------------PLUG -----------------------------
@@ -20,10 +23,20 @@ call plug#begin(g:vim_folder . '/plugged')
 Plug 'kien/ctrlp.vim'
 Plug 'jremmen/vim-ripgrep'
 Plug 'ludovicchabant/vim-gutentags'
+Plug 'skywind3000/gutentags_plus'
 Plug 'tpope/vim-fugitive'
+Plug 'axvr/org.vim'
+"uml
+Plug 'tyru/open-browser.vim'
+Plug 'aklt/plantuml-syntax'
+Plug 'weirongxu/plantuml-previewer.vim'
+"end uml
 
 call plug#end()
 
+"--------------plantuml-previewer---------------
+"unclear why needed
+let g:plantuml_previewer#debug_mode = 1
 
 "--------------Ale -----------------------------
 let g:ale_set_highlights = 1
@@ -31,11 +44,9 @@ let g:ale_linters = {'c': ['flint'] }
 let g:ale_enabled = 0
 
 "-----------RipGrep--------------------------
-if g:os == 'Windows'
-    let g:rg_command = 'rg --smart-case --ignore-file ~/git/ignore --vimgrep'
-else
-    let g:rg_command = 'rg --smart-case --ignore-file ~/.config/git/ignore --vimgrep'
-endif
+"let g:rg_command = 'rg --smart-case --ignore-file ' . g:ignore_file . ' --vimgrep -t c -t cpp -t py -t cmake'
+let g:rg_command = "rg --smart-case --vimgrep --ignore-file " .  g:rgignore_file
+
 "statusline settings
 set statusline=
 set statusline+=\ %f "file name
@@ -44,7 +55,7 @@ set statusline+=%= "go to right side of statusline
 set statusline+=\ %l/%L "line out of max lines
 set statusline+=\ %3p%% "percentage of file
 set statusline+=\ %3c "column set statusline+=\ "
-set laststatus=1 "always show statusline
+set laststatus=2 "always show statusline
 
 "------------CtrlP------------------------------
 "can change working path directory ----might be 0 instead of rw. unsure.
@@ -76,16 +87,51 @@ func! Status2()
 endfunc
 
 "------------Gutentags------------------------------
-"let g:gutentags_exclude_project_root=["./bin/", ".\bin\"./lib/boost/"]
+"NOTE: NEEDS UNIVERSAL
 "let g:gutentags_project_root_finder='Guten_root_fndr'
+"NOTE: if gutentags isn't working, just create blank tags, open a file, save
+let g:gutentags_project_root=["tags"]
 let g:gutentags_add_default_project_roots=1
-"let g:gutentags_ctags_extra_args=['-B', '--fields=+iaS', '--extra=+q' ]
+"let g:gutentags_ctags_extra_args=['-B','--fields=+iaS', '--extra=+q' ]
+let g:gutentags_ctags_extra_args=['-B','--languages=C,Python --langmap=c:.cpp.c.h' ]
+"don't wait to gen until open file in vim
 let g:gutentags_generate_on_empty_buffer=1
+let g:gutentags_generate_on_missing=1
+let g:gutentags_generate_on_write=1
+let g:gutentags_generate_on_new = 1
 let g:gutentags_define_advanced_commands=1
 let g:gutentags_enabled=1
 "function! Guten_root_fndr(filepath)
 "   return getcwd()
 "endfunction
+
+"====Gutentags Plus========
+let g:gutentags_modules = ['ctags', 'gtags_cscope']
+" generate datebases in my cache directory, prevent gtags files polluting my project
+"let g:gutentags_cache_dir = expand('~/.cache/tags')
+" change focus to quickfix window after search (optional).
+let g:gutentags_plus_switch = 1
+"dont use default maps
+let g:gutentags_plus_nomap = 1
+
+"source and test
+"find symbol in test and source
+nnoremap <leader>cs :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR>
+"find usage of symbol in test and source
+nnoremap <leader>cu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR>
+
+"source only
+"find symbol
+nnoremap <leader>ccs :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR> :Cfilter! mock<CR>
+"find usage of symbol
+nnoremap <leader>ccu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR>
+
+"test only
+"find symbol
+nnoremap <leader>cts :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter test<CR> :Cfilter mock<CR>
+"find usage of symbol
+nnoremap <leader>ctu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter test<CR>
+
 
 "------------Rebinds----------------------------
 "d no longer yanks, remap to black hole register
@@ -118,16 +164,15 @@ nnoremap <C-j> <C-W>j
 nnoremap <C-k> <C-W>k
 nnoremap <C-l> <C-W>l
 nnoremap <C-h> <C-W>h
-tnoremap <C-j> <C-W>j
-tnoremap <C-k> <C-W>k
-tnoremap <C-l> <C-W>l
-tnoremap <C-h> <C-W>h
+"TODO
+"tnoremap j
+"tnoremap k
+"tnoremap h
+"tnoremap l
 
-"center buffer when jumping around
+"center buffer when jumping around functions
 nnoremap ]] ]]zz
 nnoremap [[ [[zz
-nnoremap n nzz
-nnoremap N Nzz
 
 "Y yanks till end of line
 nnoremap Y y$
@@ -143,12 +188,9 @@ nnoremap <leader>$ :e $MYVIMRC<CR>
 "update tags
 nnoremap <leader>] :GutentagsUpdate!
 
-"open current test in gdb
-nnoremap <leader>g :call GDBTest()<CR>
-
 "yank and paste from system clipboard
 nnoremap <leader>p "+p
-noremap <leader>y "+y
+nnoremap <leader>y "+y
 
 "stop highlighting searches
 nnoremap <leader>/ :nohlsearch<CR>
@@ -204,7 +246,7 @@ set guioptions+=c
 "use console dialogs
 set guioptions+=e
 "for tab label
-set guitablabel=%N)\ %{GuiTabLabel()}
+"set guitablabel=%N)\ %{GuiTabLabel()}
 "tab number + custom tab label
 set enc=utf-8
 set guifont=Consolas:h11:cANSI
@@ -224,13 +266,13 @@ if has("gui_running")
   hi IncSearch guifg=DarkRed
 
 else
-  "This is console Vim.
+"  "This is console Vim.
   colorscheme desert
-  "arcane settings to get block cursor for normal mode
-  let &t_ti.="\e[1 q"
+"  "arcane settings to get block cursor for normal mode
+  "let &t_ti.="\e[1 q"
   let &t_SI.="\e[5 q"
-  let &t_EI.="\e[1 q"
-  let &t_te.="\e[0 q"
+  "let &t_EI.="\e[1 q"
+  "let &t_te.="\e[0 q"
 endif
 
 
@@ -281,11 +323,11 @@ set cindent
 
 " This should make the text for comment blocks
 " start on the same column as the slash /
-"set cinoptions+=c0,C1
+set cinoptions+=c0,C1
 
 " This should have multi-line conditionals to start
 " on the column after the (
-"set cinoptions+=(0,u0,w1
+set cinoptions+=(0,u0,w1
 
 "set 'normal' shifting
 set cinoptions+=>1s
@@ -311,7 +353,7 @@ set iskeyword-=/
 "set python comments to '#' (implement later)
 augroup configgroup
 "delete all autocommands when sourcing vimrc autocmd!
-    autocmd BufWritePre *.h,*.cpp,*.py,*.jam,*.c,vimrc :%s/ \+$//ge
+    autocmd BufWritePre vimrc,*.h,*.cpp,*.py,*.jam,*.c :%s/ \+$//ge
     autocmd FileType python setlocal commentstring=#\ %s
     autocmd FileType *.c, *.h setlocal spell
     autocmd FileType *.dtsi make set noexpandtab
@@ -414,37 +456,6 @@ function! ALETog()
   execute ":ALEToggle"
 endfunc
 
-function! GDBTest()
-  let l_path = "prod/unittests/debug/utsim-b3mb/build/" . expand("%")
-  "libraries has special handling
-  if l_path =~ "/lib/"
-    "extract the lib name which is also test name
-    let l_path2 = split(l_path, "/lib/")[1]
-    let l_path2 = split(l_path2, "/")[0]
-    "remove test folder from path
-    let l_path = split(l_path, "test/")[0]
-    "add in lib name to path
-    let l_path = l_path . "test_" . l_path2
-  else
-    "remove test folder from path
-    let l_path = split(l_path, "test/")[0] . expand("%:t")
-    "remove .cpp
-    let l_path = split(l_path, ".cpp")[0]
-  endif
-  winc |
-  execute ":Termdebug " . l_path
-  winc l
-endfunc
-
 function! UpdatePath()
   let &path = getcwd() . '/**'
 endfunc
-
-"--------------Term -----------------------------
-"has to be late or else cursor doesn't work ??
-packadd termdebug
-let g:termdebug_wide = 1
-
-"-------------------------------------------
-let $BASH_ENV = "/home/bfran/bin/aliases.sh"
-set makeprg=buildfw
