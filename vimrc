@@ -135,7 +135,7 @@ nnoremap <leader>ctu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter te
 
 "------------Rebinds----------------------------
 "d no longer yanks, remap to black hole register
-noremap d "_d
+nnoremap d "_d
 nnoremap D "_D
 vnoremap d "_d
 vnoremap D "_D
