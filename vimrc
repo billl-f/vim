@@ -10,11 +10,19 @@ if has('win32') || has('win16') || has ('win64')
     let g:ignore_file ='~/git/ignore'
     "note: ~ doesn't work here due to rg external cmd
     let g:rgignore_file ='C:/users/bfraney/git/rgignore'
+    " $HOME/.vimrc
+    set directory=~/vimfiles/swap//"
 else
     let g:os = substitute(system('uname'), '\n', '', '')
     let g:vim_folder ='~/.vim/'
     let g:ignore_file ='~/.config/git/ignore'
     let g:rgignore_file ='~/.config/rgignore'
+    set directory=~/.vim/swap//"
+endif
+
+"make swapfile folders if it doesn't exist
+if !isdirectory(expand(&directory))
+    call mkdir(expand(&directory), "p")
 endif
 
 "--------------PLUG -----------------------------
