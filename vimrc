@@ -356,6 +356,9 @@ set wildignore+=*/sim/**
 "make normal mode commands like 'w' respect path delimiter "/" "sometimes i want to yank just the file name, not whole path
 set iskeyword-=/
 
+"make = a file name delimiter
+set isfname-==
+
 "------------augroups/autocmnds/commands--------
 "ensures autocmds are only applied once
 "clear all autocommands for current group
