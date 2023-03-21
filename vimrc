@@ -199,6 +199,7 @@ nnoremap <leader>g :call GDBTest()<CR>
 "yank and paste from system clipboard
 nnoremap <leader>p "+p
 nnoremap <leader>y "+y
+nnoremap <leader>Y "+y$
 
 "stop highlighting searches
 nnoremap <leader>/ :nohlsearch<CR>
