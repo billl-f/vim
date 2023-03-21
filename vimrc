@@ -242,7 +242,8 @@ nnoremap <leader>h :Rg =expand('') -th
 "-----------editor setting ---------------------
 set background=dark
 set guioptions-=T
-"remove toolbar set guioptions-=m
+"remove toolbar
+set guioptions-=m
 "remove menu
 set guioptions-=r
 "remove right scrollbar
