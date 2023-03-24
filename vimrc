@@ -102,11 +102,13 @@ let g:gutentags_project_root=["tags"]
 let g:gutentags_add_default_project_roots=1
 "let g:gutentags_ctags_extra_args=['-B','--fields=+iaS', '--extra=+q' ]
 let g:gutentags_ctags_extra_args=['-B','--languages=C,Python --langmap=c:.cpp.c.h' ]
-"don't wait to gen until open file in vim
+
+"pretty much always generate tags
 let g:gutentags_generate_on_empty_buffer=1
 let g:gutentags_generate_on_missing=1
-let g:gutentags_generate_on_write=1
 let g:gutentags_generate_on_new = 1
+let g:gutentags_generate_on_write=1
+
 let g:gutentags_define_advanced_commands=1
 let g:gutentags_enabled=1
 "function! Guten_root_fndr(filepath)
@@ -125,31 +127,30 @@ let g:gutentags_plus_switch = 1
 "dont use default maps
 let g:gutentags_plus_nomap = 1
 
-"source and test
-"find symbol in test and source
-nnoremap <leader>cs :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR>
-"find usage of symbol in test and source
-nnoremap <leader>cu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR>
+"tag symbol
+nnoremap <leader>ts :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR>
+"tag usage
+nnoremap <leader>tu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR>
 
 "source only
-"find symbol
-nnoremap <leader>ccs :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR> :Cfilter! mock<CR>
-"find usage of symbol
-nnoremap <leader>ccu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR>
+"tag symbol code-only
+nnoremap <leader>tsc :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR> :Cfilter! mock<CR>
+"find usage code-only
+nnoremap <leader>tuc :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR>
 
 "test only
-"find symbol
-nnoremap <leader>cts :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter test<CR> :Cfilter mock<CR>
-"find usage of symbol
-nnoremap <leader>ctu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter test<CR>
+"tag symbol test-only
+nnoremap <leader>tst :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter test<CR> :Cfilter mock<CR>
+"tag usage test-only
+nnoremap <leader>tut :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter test<CR>
 
 
 "------------Rebinds----------------------------
 "d no longer yanks, remap to black hole register
-nnoremap d "_d
-nnoremap D "_D
-vnoremap d "_d
-vnoremap D "_D
+"nnoremap d "_d
+"nnoremap D "_D
+"vnoremap d "_d
+"vnoremap D "_D
 "
 ""x no longer yanks, remap to black hole register
 nnoremap x "_x
@@ -215,30 +216,11 @@ endif
 "Ctrl-P search buffers
 nnoremap <leader>b :CtrlPBuffer<CR>
 
-"Ctrl-P search functions in current file
-nnoremap <leader>f :CtrlPFunky
-
-"run code checker
-"yank relative path of current file
-noremap <leader>% :let @"=expand("%:h")
-
-"call IWYU
-noremap <leader>i :call IWYU()
-
-"toggle ALE on/off
-nnoremap <leader>a :call ALETog()
-
-"open Location List
-nnoremap <leader>l :lope
-
 "open terminal in bottom right
 nnoremap <leader>t :botr term
 
-"open dir snippet
-nnoremap <leader>o :OpenDir(" nnoremap ]] :TagbarToggle <CR>
-
-"grep for word under cursor in header
-nnoremap <leader>h :Rg =expand('') -th
+"toggle change to build dir for quickfix errors
+nnoremap <leader>m :call GoMake()<CR>
 
 "-----------editor setting ---------------------
 set background=dark
@@ -388,60 +370,6 @@ command! -nargs=1 OpenDir call OpenDir()
 "helptags $VIMRUNTIME
 
 "----------custom functions--------------------- "
-"update tags
-function! UpdateTags(timer_id)
-    let cwd = getcwd()
-    "let tagfilename = cwd . "\\tags"
-    "call delete(tagfilename)
-"let cmd = 'ctags ' . '-B -R -f ' . tagfilename . ' --exclude=bin --exclude=.\lib\boost --fields=+iaS --extra=+q ' "execute 'term ' . cmd let tagfilename = cwd . "\\tags_h"
-   call delete(tagfilename)
-let cmd = 'ctags ' . '-B -R -f ' . tagfilename . ' --exclude=bin --exclude=.\lib\boost,*.c --fields=+iaS --c++-kinds=p --extra=+q ' execute 'term++close ' . cmd
-endfunction
-
-function! UpdateTags(timer_id)
-	let cwd = getcwd()
-	let tagfilename = cwd . "\\tags"
-	call delete(tagfilename)
-	let cmd = 'ctags ' . '-B -R -f ' . tagfilename . ' --exclude=bin --exclude=.\lib\boost --fields=+iaS --extra=+q ' "execute 'term ' . cmd "
-	let tagfilename = cwd . '\\tags_h' "
-	call delete(tagfilename)
-	"let cmd = 'ctags ' . '-B -R -f ' . tagfilename . ' --exclude=bin --exclude=.\lib\boost,*.c --fields=+iaS --c++-kinds=p --extra=+q ' execute 'term++close ' . cmd
-endfunction
-
-"open specified directory in new tab and refresh ctags
-function! OpenDir(dir)
-   "Tabenter won't warm the cache since when we enter the tab we are still
-   "the old cwd. This signal prevents a grep on tabenter and we do one at
-   "the bottom of this function with the new cwd.
-   "let g:dir_opened = 1
-   let newdir="D:/git/" . a:dir
-  execute 'tabnew | vsplit | vsplit | winc ='
-  execute 'cd ' . newdir
-  execute 'Ex | winc l'
-  execute 'cd ' . newdir
-  execute 'Ex | winc l'
-  execute 'cd ' . newdir
-  execute 'Ex | winc h | winc h'
-  "Warm the cache
-  "execute ":AsyncRun Rg iop>log.txt"
-endfunction
-
-function! CodeCheck()
- set makeprg=python.exe set errorformat=%f!%l!%m exe ':make!' getcwd() . "\\support\\tools\\common_scripts\\cconventions\\code_check.py " . expand("%:p") botright copen endfunction
-function! CodeComplexity()
-  set makeprg=python.exe
-  set errorformat=%f!%l!%m
-  exe ':make!' 'D:/giaw/Tools/CodeComplexityCheck/code_complexity_check.py ' . expand("%:p")
-  botright copen
-endfunction
-"run IWYU on current file
-function!
-   IWYU() let l:temp_file = substitute( expand("%"), "\\", "/", "g" ) execute 'silent !start sh -c \"./iwyu2.sh ' . l:temp_file . '"'
-
-  "old git bash compatible command
-  "execute 'silent !start cmd /k "iwyu2.sh " % --max_line_length=200'
-endfunction
-
 function! GDBTest()
   let l_path = "prod/unittests/debug/utsim-b3mb/build/" . expand("%")
   "libraries has special handling
@@ -469,27 +397,6 @@ if g:os == 'Windows'
   set diffexpr=MyDiff()
 endif
 
-function! SortUniqQFList()
-   let sortedList = sort(getqflist(), 's:CompareQuickfixEntries')
-   call setqflist(sortedList)
-endfunction
-
-function! ShowFunc()
-  let gf_s = &grepformat
-  let gp_s = &grepprg
-  let &grepformat = '%*\k%*\sfunctions%*\s%l%*\s%f %*\s%m'
-  let &grepprg = 'ctags -x --c-types=f --sort=no -o -' write
-  "replace backslash in file with 2 backslashed for searching
-  let l:temp_file = substitute( expand("%"), "\\", "\\\\\\", "g" )
-  echo l:temp_file
-  execute ":grep " . l:temp_file
-  let &grepformat = gf_s let &grepprg = gp_s
-endfunc
-
-function! ALETog()
-  execute ":lclo"
-  execute ":ALEToggle"
-endfunc
 
 function! UpdatePath()
   let &path = getcwd() . '/**'
@@ -500,6 +407,20 @@ endfunc
 packadd termdebug
 let g:termdebug_wide = 1
 
-"-------------------------------------------
+"-------------building --------------------------
 let $BASH_ENV = "/home/bfran/bin/aliases.sh"
 set makeprg=buildfw
+
+"------quickfix build dir---------------
+let s:toggle=0
+let s:cwd="~/code/trenton"
+function! GoMake()
+    let s:toggle=xor(s:toggle, 1)
+    if s:toggle
+        cd prod/bhb/debug/hwpp-b3mb/build
+        execute ":pwd"
+    else
+        execute ":cd " . s:cwd
+        execute ":pwd"
+    endif
+endfunc
