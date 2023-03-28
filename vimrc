@@ -201,6 +201,9 @@ nnoremap <leader>g :call GDBTest()<CR>
 nnoremap <leader>p "+p
 nnoremap <leader>y "+y
 nnoremap <leader>Y "+y$
+vnoremap <leader>p "+p
+vnoremap <leader>y "+y
+vnoremap <leader>Y "+y$
 
 "stop highlighting searches
 nnoremap <leader>/ :nohlsearch<CR>
