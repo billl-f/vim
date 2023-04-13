@@ -9,7 +9,7 @@ if has('win32') || has('win16') || has ('win64')
     let g:vim_folder ='~/vimfiles/'
     let g:ignore_file ='~/git/ignore'
     "note: ~ doesn't work here due to rg external cmd
-    let g:rgignore_file ='C:/users/bfraney/git/rgignore'
+    let g:rgignore_file ='C:/users/bfraney/.rgignore'
     " $HOME/.vimrc
     set directory=~/vimfiles/swap//"
 else
@@ -43,6 +43,7 @@ Plug 'weirongxu/plantuml-previewer.vim'
 call plug#end()
 
 "--------------plantuml-previewer---------------
+"install: download openjdk and add bin folder to path
 "unclear why needed
 let g:plantuml_previewer#debug_mode = 1
 
@@ -97,8 +98,7 @@ endfunc
 "------------Gutentags------------------------------
 "NOTE: NEEDS UNIVERSAL
 "let g:gutentags_project_root_finder='Guten_root_fndr'
-"NOTE: if gutentags isn't working, just create blank tags, open a file, save
-let g:gutentags_project_root=["tags"]
+let g:gutentags_project_root=[".git"]
 let g:gutentags_add_default_project_roots=1
 "let g:gutentags_ctags_extra_args=['-B','--fields=+iaS', '--extra=+q' ]
 let g:gutentags_ctags_extra_args=['-B','--languages=C,Python --langmap=c:.cpp.c.h' ]
@@ -116,6 +116,8 @@ let g:gutentags_enabled=1
 "endfunction
 
 "====Gutentags Plus========
+"NOTE: requires GNU Global and python in path
+"NOTE: GTAGS not found: since it uses incremental update, it expects GTAGS to exist already
 "install gnu global then open any source file to generate
 packadd cfilter
 
