@@ -136,15 +136,15 @@ nnoremap <leader>tu :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR>
 
 "source only
 "tag symbol code-only
-nnoremap <leader>tsc :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR> :Cfilter! mock<CR>
+nnoremap <leader>tss :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR> :Cfilter! mock<CR>
 "find usage code-only
-nnoremap <leader>tuc :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR>
+nnoremap <leader>tus :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter! test<CR> :Cfilter! mock<CR>
 
 "test only
 "tag symbol test-only
-nnoremap <leader>tst :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter test<CR> :Cfilter mock<CR>
+nnoremap <leader>tst :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter src<CR>
 "tag usage test-only
-nnoremap <leader>tut :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter test<CR>
+nnoremap <leader>tut :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter src<CR>
 
 
 "------------Rebinds----------------------------
