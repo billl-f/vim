@@ -101,7 +101,9 @@ endfunc
 let g:gutentags_project_root=[".git"]
 let g:gutentags_add_default_project_roots=1
 "let g:gutentags_ctags_extra_args=['-B','--fields=+iaS', '--extra=+q' ]
-let g:gutentags_ctags_extra_args=['-B','--languages=C,Python --langmap=c:.cpp.c.h' ]
+"NOTE: may need to use --map instead, headers aren't a part of c langmap
+"let g:gutentags_ctags_extra_args=['-B','--languages=C,Python --langmap=c:.cpp.c.h' ]
+let g:gutentags_ctags_extra_args=['-B','--languages=C,C++,Python --kinds-C++=+Z' ]
 
 "pretty much always generate tags
 let g:gutentags_generate_on_empty_buffer=1
@@ -128,6 +130,7 @@ let g:gutentags_modules = ['ctags', 'gtags_cscope']
 let g:gutentags_plus_switch = 1
 "dont use default maps
 let g:gutentags_plus_nomap = 1
+let g:gutentags_plus_height = 12
 
 "tag symbol
 nnoremap <leader>ts :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR>
@@ -146,6 +149,9 @@ nnoremap <leader>tst :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR> :Cfilter sr
 "tag usage test-only
 nnoremap <leader>tut :GscopeFind 3 <c-r>=expand('<cword>') <CR> <CR> :Cfilter src<CR>
 
+function! AddHeader()
+  let &path = getcwd() . '/**'
+endfunc
 
 "------------Rebinds----------------------------
 "d no longer yanks, remap to black hole register
@@ -197,7 +203,11 @@ ca Glog Glog!
 nnoremap <leader>$ :e $MYVIMRC<CR>
 
 "open current test in gdb
-nnoremap <leader>g :call GDBTest()<CR>
+nnoremap <leader>gt :call GDBTest()<CR>
+"open remote hw gdb session
+nnoremap <leader>gr :call GDBHwRemote()<CR>
+"open local hw gdb session
+nnoremap <leader>gl :call GDBHwLocal()<CR>
 
 "yank and paste from system clipboard
 nnoremap <leader>p "+p
@@ -265,6 +275,9 @@ if has("gui_running")
 else
   "This is console Vim.
   colorscheme desert
+  "change highlight color so you can actually see the cursor
+  hi Search ctermbg=DarkRed
+  hi IncSearch ctermfg=DarkCyan
   "arcane settings to get block cursor for normal mode
   let &t_ti.="\e[1 q"
   let &t_SI.="\e[5 q"
@@ -375,7 +388,34 @@ command! -nargs=1 OpenDir call OpenDir()
 "helptags $VIMRUNTIME
 
 "----------custom functions--------------------- "
+function! GDBHwRemote()
+  let g:termdebug_config = {}
+  let g:termdebug_config['wide'] = 163
+  let g:termdebug_config['command'] = ["gdb-multiarch",
+              \ "-ex", "target extended-remote lm-bfran-chewy.elements.local:3333",
+              \ "-q",
+              \ "-ex", "set backtrace limit 20",
+              \ "-ex", "monitor gdb_breakpoint_override hard",
+              \ "--symbols=./prod/bhb/debug/hwpp-b3mb/build/bhb-hwpp.axf"]
+  execute ":Termdebug"
+  winc =
+endfunc
+
+function! GDBHwLocal()
+  let g:termdebug_config = {}
+  let g:termdebug_config['wide'] = 163
+  let g:termdebug_config['command'] = ["gdb-multiarch",
+              \ "-q",
+              \ "-ex", "set backtrace limit 20",
+              \ "-ex", "monitor gdb_breakpoint_override hard",
+              \ "--symbols=./prod/bhb/debug/hwpp-b3mb/build/bhb-hwpp.axf"]
+  execute ":Termdebug"
+  winc =
+endfunc
+
 function! GDBTest()
+  let g:termdebug_config = {}
+  let g:termdebug_config['wide'] = 163
   let l_path = "prod/unittests/debug/utsim-b3mb/build/" . expand("%")
   "libraries has special handling
   if l_path =~ "/lib/"
@@ -410,6 +450,8 @@ endfunc
 "--------------Term -----------------------------
 "has to be late or else cursor doesn't work ??
 packadd termdebug
+
+"legacy, replaced by g:termdebug_config
 let g:termdebug_wide = 1
 
 "-------------building --------------------------
