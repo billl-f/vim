@@ -34,6 +34,7 @@ Plug 'ludovicchabant/vim-gutentags'
 Plug 'skywind3000/gutentags_plus'
 Plug 'tpope/vim-fugitive'
 Plug 'axvr/org.vim'
+Plug 'christoomey/vim-tmux-navigator'
 "uml
 Plug 'tyru/open-browser.vim'
 Plug 'aklt/plantuml-syntax'
