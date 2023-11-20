@@ -35,6 +35,7 @@ Plug 'skywind3000/gutentags_plus'
 Plug 'tpope/vim-fugitive'
 Plug 'axvr/org.vim'
 Plug 'christoomey/vim-tmux-navigator'
+Plug 'ojroques/vim-oscyank', {'branch': 'main'}
 "uml
 Plug 'tyru/open-browser.vim'
 Plug 'aklt/plantuml-syntax'
@@ -154,6 +155,12 @@ function! AddHeader()
   let &path = getcwd() . '/**'
 endfunc
 
+function! GutentagsCleaner()
+  !rm GTAGS GRTAGS GPATH tags
+endfunc
+
+command! GutentagsClean :call GutentagsCleaner()
+
 "------------Rebinds----------------------------
 "d no longer yanks, remap to black hole register
 "nnoremap d "_d
@@ -217,6 +224,9 @@ nnoremap <leader>Y "+y$
 vnoremap <leader>p "+p
 vnoremap <leader>y "+y
 vnoremap <leader>Y "+y$
+
+nmap <leader>c <Plug>OSCYankOperator
+vmap <leader>c <Plug>OSCYankVisual
 
 "stop highlighting searches
 nnoremap <leader>/ :nohlsearch<CR>
@@ -397,7 +407,7 @@ function! GDBHwRemote()
               \ "-q",
               \ "-ex", "set backtrace limit 20",
               \ "-ex", "monitor gdb_breakpoint_override hard",
-              \ "--symbols=./prod/bhb/debug/hwpp-b3mb/build/bhb-hwpp.axf"]
+              \ "--symbols=./prod/bhb/debug/hwpp-kv7/build/bhb-hwpp.axf"]
   execute ":Termdebug"
   winc =
 endfunc
@@ -409,7 +419,7 @@ function! GDBHwLocal()
               \ "-q",
               \ "-ex", "set backtrace limit 20",
               \ "-ex", "monitor gdb_breakpoint_override hard",
-              \ "--symbols=./prod/bhb/debug/hwpp-b3mb/build/bhb-hwpp.axf"]
+              \ "--symbols=./prod/hud/debug/hwmainfw-kv7/build/bhb-hwpp.axf"]
   execute ":Termdebug"
   winc =
 endfunc
@@ -417,7 +427,7 @@ endfunc
 function! GDBTest()
   let g:termdebug_config = {}
   let g:termdebug_config['wide'] = 163
-  let l_path = "prod/unittests/debug/utsim-b3mb/build/" . expand("%")
+  let l_path = "prod/unittests/debug/utsim-kv7/build/" . expand("%")
   "libraries has special handling
   if l_path =~ "/lib/"
     "extract the lib name which is also test name
@@ -465,7 +475,7 @@ let s:cwd="~/code/trenton"
 function! GoMake()
     let s:toggle=xor(s:toggle, 1)
     if s:toggle
-        cd prod/bhb/debug/hwpp-b3mb/build
+        cd prod/bhb/debug/hwpp-kv7/build
         execute ":pwd"
     else
         execute ":cd " . s:cwd
