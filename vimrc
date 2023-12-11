@@ -248,6 +248,15 @@ nnoremap <leader>t :botr term
 "toggle change to build dir for quickfix errors
 nnoremap <leader>m :call GoMake()<CR>
 
+"yank relative path
+nnoremap <leader>yr :let @"=expand("%")<CR>
+
+"yank full path
+nnoremap <leader>yp :let @"=expand("%:p")<CR>
+
+"yank filename
+nnoremap <leader>yf :let @"=expand("%:t")<CR>
+
 "-----------editor setting ---------------------
 set background=dark
 set guioptions-=T
