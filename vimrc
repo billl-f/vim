@@ -134,6 +134,8 @@ let g:gutentags_plus_switch = 1
 let g:gutentags_plus_nomap = 1
 let g:gutentags_plus_height = 12
 
+"tag definition
+nnoremap <leader>td :GscopeFind 1 <c-r>=expand('<cword>') <CR> <CR> :cn <CR>:cclo <CR>
 "tag symbol
 nnoremap <leader>ts :GscopeFind 0 <c-r>=expand('<cword>') <CR> <CR>
 "tag usage
@@ -206,6 +208,9 @@ nnoremap Y y$
 ca Ag Ag!
 ca Glog Glog!
 
+nnoremap <silent> <leader>J :<C-u>call search('\%' . virtcol('.') . 'v\S', 'W')<CR>
+nnoremap <silent> <leader>K :<C-u>call search('\%' . virtcol('.') . 'v\S', 'bW')<CR>
+
  "-----------Leaders-----------------------------
 "open VIMRC
 nnoremap <leader>$ :e $MYVIMRC<CR>
@@ -246,7 +251,7 @@ nnoremap <leader>b :CtrlPBuffer<CR>
 nnoremap <leader>t :botr term
 
 "toggle change to build dir for quickfix errors
-nnoremap <leader>m :call GoMake()<CR>
+nnoremap <leader>md :call GoMake()<CR>
 
 "yank relative path
 nnoremap <leader>yr :let @"=expand("%")<CR>
@@ -256,6 +261,12 @@ nnoremap <leader>yp :let @"=expand("%:p")<CR>
 
 "yank filename
 nnoremap <leader>yf :let @"=expand("%:t")<CR>
+
+"set makeprg to test with filters
+nnoremap <leader>mt :call TestMake()<CR>
+
+"set makeprg to source with filters
+nnoremap <leader>ms :call SourceMake()<CR>
 
 "-----------editor setting ---------------------
 set background=dark
@@ -298,6 +309,8 @@ else
   "change highlight color so you can actually see the cursor
   hi Search ctermbg=DarkRed
   hi IncSearch ctermfg=DarkCyan
+  hi MatchParen ctermbg=none
+  hi MatchParen ctermfg=DarkRed
   "arcane settings to get block cursor for normal mode
   let &t_ti.="\e[1 q"
   let &t_SI.="\e[5 q"
@@ -386,7 +399,7 @@ set isfname-==
 "set python comments to '#' (implement later)
 augroup configgroup
 "delete all autocommands when sourcing vimrc autocmd!
-    autocmd BufWritePre vimrc,*.h,*.cpp,*.py,*.jam,*.c :%s/ \+$//ge
+    autocmd BufWritePre vimrc,*.h,*.cpp,*.py,*.jam,*.c,*.json :%s/ \+$//ge
     autocmd FileType python setlocal commentstring=#\ %s
     autocmd FileType *.c, *.h setlocal spell
     autocmd FileType *.dtsi make set noexpandtab
@@ -408,6 +421,14 @@ command! -nargs=1 OpenDir call OpenDir()
 "helptags $VIMRUNTIME
 
 "----------custom functions--------------------- "
+"fix paste indentation using tmux, see h:xterm-bracketed-paste
+if &term =~ "screen"
+    let &t_BE = "\e[?2004h"
+    let &t_BD = "\e[?2004l"
+    exec "set t_PS=\e[200~"
+    exec "set t_PE=\e[201~"
+endif
+
 function! GDBHwRemote()
   let g:termdebug_config = {}
   let g:termdebug_config['wide'] = 163
@@ -416,7 +437,7 @@ function! GDBHwRemote()
               \ "-q",
               \ "-ex", "set backtrace limit 20",
               \ "-ex", "monitor gdb_breakpoint_override hard",
-              \ "--symbols=./prod/bhb/debug/hwpp-kv7/build/bhb-hwpp.axf"]
+              \ "--symbols=./prod/hud/debug/hwmainfw-kv7/build/hud-hwmainfw.axf"]
   execute ":Termdebug"
   winc =
 endfunc
@@ -428,7 +449,7 @@ function! GDBHwLocal()
               \ "-q",
               \ "-ex", "set backtrace limit 20",
               \ "-ex", "monitor gdb_breakpoint_override hard",
-              \ "--symbols=./prod/hud/debug/hwmainfw-kv7/build/bhb-hwpp.axf"]
+              \ "--symbols=./prod/hud/debug/hwmainfw-kv7/build/hud-hwmainfw.axf"]
   execute ":Termdebug"
   winc =
 endfunc
@@ -467,6 +488,31 @@ function! UpdatePath()
   let &path = getcwd() . '/**'
 endfunc
 
+function! SourceMake()
+ set makeprg=buildfw
+ :make
+ :Cfilter! mint.mint
+ :Cfilter! mmint
+ :Cfilter! INFO]
+ :cn
+ :cp
+endfunc
+
+function! TestMake()
+ "extract module name from current file
+ let l:l_path =  expand ("%")
+ let l:l_path2 = split(l_path, "/")[-3]
+
+ "set and restore makeprg, filter out noise
+ let &makeprg="./build-unittests.sh\ -m\ " . l:l_path2
+ :make
+ :Cfilter! mint.mint
+ :Cfilter! mmint
+ :cn
+ :cp
+ set makeprg=buildfw
+endfunc
+
 "--------------Term -----------------------------
 "has to be late or else cursor doesn't work ??
 packadd termdebug
@@ -477,6 +523,11 @@ let g:termdebug_wide = 1
 "-------------building --------------------------
 let $BASH_ENV = "/home/bfran/bin/aliases.sh"
 set makeprg=buildfw
+"set makeprg=buildfw \\\|\ cfilter! INFO]
+
+"au QuickfixCmdPost make :Cfilter! INFO]
+"au QuickfixCmdPost make :Cfilter! mmint
+"au QuickfixCmdPost make :Cfilter! mint.mint
 
 "------quickfix build dir---------------
 let s:toggle=0
@@ -484,10 +535,30 @@ let s:cwd="~/code/trenton"
 function! GoMake()
     let s:toggle=xor(s:toggle, 1)
     if s:toggle
-        cd prod/bhb/debug/hwpp-kv7/build
+        cd prod/hud/debug/hwmainfw-kv7/build
         execute ":pwd"
     else
         execute ":cd " . s:cwd
         execute ":pwd"
     endif
 endfunc
+
+"-------get include for non-function symbol---
+" updates needed to get decl for function
+nnoremap <leader>i :call GetInclude()<cr>
+function! GetInclude()
+    let l:wordCursor = expand("<cword>")
+    execute ":GscopeFind 1 " . l:wordCursor
+    execute ":botr cope"
+    normal jf.byt|
+    execute ":cclo"
+    execute ":echo getline(search('#include \"'))"
+    normal o#include "
+    normal pa"
+    normal vis
+    execute ":'<,'>sort u"
+    echo @"
+    "normal jk
+    "todo: fix jk above. vnoremap jk messes up visual mode nav
+endfunc
+
